@@ -126,8 +126,8 @@ export default function Home() {
             onClick={() => setIsModalOpen(true)}
             disabled={!selectedFile}
             className={`px-8 py-3 rounded-lg font-medium transition-all ${selectedFile
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
               }`}
           >
             Summarize
@@ -151,15 +151,32 @@ export default function Home() {
             <div className="prose prose-invert max-w-none">
               <p className="whitespace-pre-line">{mockSummary}</p>
             </div>
-            <div className="mt-6 pt-6 border-t border-gray-700">
+            <div className="mt-6 pt-6 border-t border-gray-700 flex gap-4">
               <button
-                className="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
                 onClick={() => {
                   // Handle quiz generation here
                   alert("Quiz generation feature coming soon!");
                 }}
               >
                 Generate Quiz
+              </button>
+              <button
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+                onClick={() => {
+                  // Create a Blob with the summary text
+                  const blob = new Blob([mockSummary], { type: 'text/plain' });
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.setAttribute('download', 'summary.txt');
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(url);
+                }}
+              >
+                Download Summary
               </button>
             </div>
           </div>
