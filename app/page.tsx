@@ -5,6 +5,14 @@ import { useState } from "react";
 export default function Home() {
   const [summaryStyle, setSummaryStyle] = useState("normal");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const mockSummary = `This document discusses the importance of renewable energy sources and their impact on climate change. Key points include:
+
+- Solar and wind power are becoming increasingly cost-effective
+- Renewable energy creates more jobs than fossil fuels
+- Global investments in clean energy reached record levels in 2022
+- Technological advances are improving energy storage solutions`;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -113,8 +121,50 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            disabled={!selectedFile}
+            className={`px-8 py-3 rounded-lg font-medium transition-all ${selectedFile
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              }`}
+          >
+            Summarize
+          </button>
         </main>
       </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Summary</h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="prose prose-invert max-w-none">
+              <p className="whitespace-pre-line">{mockSummary}</p>
+            </div>
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <button
+                className="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
+                onClick={() => {
+                  // Handle quiz generation here
+                  alert("Quiz generation feature coming soon!");
+                }}
+              >
+                Generate Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
