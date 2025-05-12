@@ -1,18 +1,51 @@
 "use client";
 
 import { useState } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function Home() {
   const [summaryStyle, setSummaryStyle] = useState("normal");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [quiz, setQuiz] = useState<string>("");
+  const [quizOpen, setQuizOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mockSummary, setMockSummary] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const mockSummary = `This document discusses the importance of renewable energy sources and their impact on climate change. Key points include:
+  const handleSummarize = async () => {
+    if (!selectedFile) return;
 
-- Solar and wind power are becoming increasingly cost-effective
-- Renewable energy creates more jobs than fossil fuels
-- Global investments in clean energy reached record levels in 2022
-- Technological advances are improving energy storage solutions`;
+    setIsLoading(true);
+    setError("");
+
+    const formData = new FormData();
+    // Change "file" to "pdf" to match the backend expectation
+    formData.append("pdf", selectedFile);
+    formData.append("summaryStyle", summaryStyle);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/summarize-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to summarize document");
+      }
+
+      const data = await response.json();
+      setMockSummary(data.summary);
+      setQuiz(data.quiz);
+      setIsModalOpen(true);
+    } catch (error) {
+      setError(JSON.stringify(error));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -122,49 +155,57 @@ export default function Home() {
             </div>
           </div>
 
+          {error && (
+            <div className="w-full max-w-xl bg-red-900/30 border border-red-500 p-4 rounded-lg text-red-300">
+              <p className="font-medium">Error: {error}</p>
+            </div>
+          )}
+
           <button
-            onClick={() => setIsModalOpen(true)}
-            disabled={!selectedFile}
-            className={`px-8 py-3 rounded-lg font-medium transition-all ${selectedFile
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            onClick={handleSummarize}
+            disabled={!selectedFile || isLoading}
+            className={`px-8 py-3 rounded-lg font-medium transition-all ${!selectedFile || isLoading
+              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
           >
-            Summarize
+            {isLoading ? "Processing..." : "Summarize"}
           </button>
         </main>
       </div>
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-auto">
+          <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-gray-700">
               <h2 className="text-xl font-bold">Summary</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700 transition-colors"
               >
                 ✕
               </button>
             </div>
-            <div className="prose prose-invert max-w-none">
-              <p className="whitespace-pre-line">{mockSummary}</p>
+
+            <div className="p-6 overflow-y-auto flex-grow">
+              <div className="prose prose-invert max-w-none">
+                <Markdown remarkPlugins={[remarkGfm]}>{quizOpen ? quiz : mockSummary}</Markdown>
+              </div>
             </div>
-            <div className="mt-6 pt-6 border-t border-gray-700 flex gap-4">
+
+            <div className="p-4 border-t border-gray-700 flex gap-4">
               <button
                 className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
                 onClick={() => {
-                  // Handle quiz generation here
-                  alert("Quiz generation feature coming soon!");
+                  setQuizOpen(quizOpen => !quizOpen);
                 }}
               >
-                Generate Quiz
+                {quizOpen ? "Hide Quiz" : "Show Quiz"}
               </button>
               <button
                 className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
                 onClick={() => {
-                  // Create a Blob with the summary text
                   const blob = new Blob([mockSummary], { type: 'text/plain' });
                   const url = window.URL.createObjectURL(blob);
                   const link = document.createElement('a');
